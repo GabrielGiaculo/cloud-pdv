@@ -1,0 +1,19 @@
+# Adicionar dentro do bloco server no arquivo de configuração do Nginx
+# Arquivo: /etc/nginx/sites-available/cloudpdv
+
+# Rota para o App Mobile
+location /app {
+    alias /var/www/Cloud PDV2/app;
+    index index.html;
+    try_files $uri $uri/ /app/index.html;
+}
+
+location /app/sw.js {
+    alias /var/www/Cloud PDV2/app/sw.js;
+    add_header Cache-Control "no-cache";
+}
+
+location /app/manifest.json {
+    alias /var/www/Cloud PDV2/app/manifest.json;
+    add_header Cache-Control "no-cache";
+}

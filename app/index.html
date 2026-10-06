@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#2563eb">
+<title>Cloud PDV — App</title>
+<link rel="manifest" href="/app/manifest.json">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%230f172a'/><stop offset='100%25' stop-color='%231e3a5f'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23bg)'/><text y='52' x='50' text-anchor='middle' font-size='48'>☁️</text><text y='72' x='50' text-anchor='middle' font-size='14' font-weight='700' fill='white' font-family='system-ui'>Cloud App</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='bg' x1='0' y1='0' x2='1' y2='1'><stop offset='0%25' stop-color='%230f172a'/><stop offset='100%25' stop-color='%231e3a5f'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23bg)'/><text y='52' x='50' text-anchor='middle' font-size='48'>☁️</text><text y='72' x='50' text-anchor='middle' font-size='14' font-weight='700' fill='white' font-family='system-ui'>Cloud App</text></svg>">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    
+    body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        background: #060d1a;
+        color: #cbd5e1;
+        min-height: 100vh;
+        max-width: 480px;
+        margin: 0 auto;
+    }
+
+    /* ── TOAST ── */
+    #toast {
+        position: fixed;
+        bottom: 80px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #0a1628;
+        color: #e2e8f0;
+        padding: 12px 20px;
+        border-radius: 24px;
+        font-size: 13px;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        display: none;
+        z-index: 9999;
+        white-space: nowrap;
+    }
+
+    /* ── TELA LOGIN ── */
+    #telaLogin {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+    }
+
+    .login-logo { font-size: 56px; margin-bottom: 12px; }
+    .login-titulo { color: #f1f5f9; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+    .login-sub { color: #475569; font-size: 13px; margin-bottom: 36px; }
+
+    .login-form { width: 100%; max-width: 360px; }
+    .login-form input {
+        width: 100%;
+        background: #0a1628;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 14px 16px;
+        color: #e2e8f0;
+        font-size: 15px;
+        margin-bottom: 12px;
+        outline: none;
+        transition: border-color 0.15s;
+    }
+    .login-form input:focus { border-color: #2563eb; }
+    .login-form input::placeholder { color: #334155; }
+
+    .btn-primary {
+        width: 100%;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.15s;
+    }
+    .btn-primary:active { background: #1d4ed8; }
+
+    /* ── APP PRINCIPAL ── */
+    #appPrincipal { display: none; }
+
+    /* ── HEADER ── */
+    .app-header {
+        background: #0a1628;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+    .app-header-left { display: flex; align-items: center; gap: 10px; }
+    .app-header-logo { font-size: 20px; }
+    .app-header-title { color: #f1f5f9; font-size: 15px; font-weight: 700; }
+    .app-header-user { color: #475569; font-size: 11px; }
+    .btn-sair {
+        background: rgba(248,113,113,0.1);
+        color: #f87171;
+        border: 1px solid rgba(248,113,113,0.2);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    /* ── BUSCA ── */
+    .busca-section {
+        padding: 16px;
+        background: #0a1628;
+        border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .busca-row { display: flex; gap: 8px; }
+    .busca-input {
+        flex: 1;
+        background: #060d1a;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 12px 14px;
+        color: #e2e8f0;
+        font-size: 14px;
+        outline: none;
+    }
+    .busca-input:focus { border-color: #2563eb; }
+    .busca-input::placeholder { color: #334155; }
+    .btn-camera {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        padding: 0 16px;
+        font-size: 20px;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+    .btn-buscar {
+        background: rgba(255,255,255,0.06);
+        color: #94a3b8;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 0 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    /* ── SCANNER ── */
+    #scannerContainer {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: #000;
+        z-index: 500;
+        flex-direction: column;
+    }
+    #scannerContainer.ativo { display: flex; }
+    #scanner { flex: 1; position: relative; overflow: hidden; }
+    #scanner video { width: 100%; height: 100%; object-fit: cover; }
+    #scanner canvas { display: none; }
+    .scanner-overlay {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+    }
+    .scanner-mira {
+        width: 88vw;
+        max-width: 420px;
+        height: 200px;
+        border: 2px solid #2563eb;
+        border-radius: 12px;
+        box-shadow: 0 0 0 9999px rgba(0,0,0,0.6);
+        position: relative;
+    }
+    .scanner-mira::before, .scanner-mira::after {
+        content: '';
+        position: absolute;
+        width: 20px;
+        height: 20px;
+        border-color: #60a5fa;
+        border-style: solid;
+    }
+    .scanner-mira::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+    .scanner-mira::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 6px 0; }
+    .scanner-linha {
+        position: absolute;
+        width: 90%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #2563eb, transparent);
+        animation: scan 2s linear infinite;
+        top: 50%;
+    }
+    @keyframes scan { 0% { top: 10%; } 100% { top: 90%; } }
+    .scanner-texto { color: white; font-size: 14px; margin-top: 20px; opacity: 0.8; }
+    .btn-fechar-scanner {
+        background: rgba(255,255,255,0.1);
+        color: white;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        padding: 14px 32px;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        margin: 20px;
+    }
+
+    /* ── CONTEÚDO ── */
+    .app-content { padding: 16px; }
+
+    /* ── CARD PRODUTO ── */
+    .produto-card {
+        background: #0a1628;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 16px;
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .produto-nome {
+        color: #f1f5f9;
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .produto-codigo {
+        color: #475569;
+        font-size: 12px;
+        font-family: monospace;
+        margin-bottom: 16px;
+    }
+    .produto-preco-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+    .preco-box {
+        background: #060d1a;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+    }
+    .preco-label { color: #475569; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .preco-valor { font-size: 18px; font-weight: 700; }
+    .preco-valor.verde { color: #34d399; }
+    .preco-valor.azul { color: #60a5fa; }
+    .preco-valor.amarelo { color: #fbbf24; }
+    .preco-valor.vermelho { color: #f87171; }
+
+    .produto-info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-top: 1px solid rgba(255,255,255,0.04);
+        font-size: 13px;
+    }
+    .produto-info-label { color: #475569; }
+    .produto-info-valor { color: #e2e8f0; font-weight: 600; }
+
+    .badge-promo {
+        background: rgba(251,191,36,0.15);
+        color: #fbbf24;
+        border: 1px solid rgba(251,191,36,0.3);
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 11px;
+        font-weight: 700;
+        display: inline-block;
+        margin-bottom: 12px;
+    }
+
+    /* ── EDITAR ESTOQUE ── */
+    .estoque-editor {
+        background: #060d1a;
+        border-radius: 10px;
+        padding: 14px;
+        margin-top: 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .estoque-label { color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase; flex: 1; }
+    .estoque-input {
+        background: #0a1628;
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: #e2e8f0;
+        font-size: 15px;
+        font-weight: 700;
+        width: 80px;
+        text-align: center;
+        outline: none;
+    }
+    .btn-salvar-estoque {
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    .btn-salvar-estoque:active { background: #1d4ed8; }
+
+    /* ── HISTÓRICO ── */
+    .historico-titulo {
+        color: #475569;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin: 20px 0 10px;
+    }
+    .historico-item {
+        background: #0a1628;
+        border: 1px solid rgba(255,255,255,0.04);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        transition: border-color 0.15s;
+    }
+    .historico-item:active { border-color: rgba(37,99,235,0.4); }
+    .historico-nome { color: #e2e8f0; font-size: 13px; font-weight: 600; }
+    .historico-codigo { color: #475569; font-size: 11px; font-family: monospace; }
+    .historico-preco { color: #34d399; font-size: 14px; font-weight: 700; }
+
+    /* ── ESTADO VAZIO ── */
+    .estado-vazio {
+        text-align: center;
+        padding: 48px 24px;
+    }
+    .estado-vazio-icon { font-size: 48px; margin-bottom: 12px; }
+    .estado-vazio-texto { color: #475569; font-size: 14px; }
+
+    /* ── NAV BOTTOM ── */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0; left: 50%; transform: translateX(-50%);
+        width: 100%;
+        max-width: 480px;
+        background: #0a1628;
+        border-top: 1px solid rgba(255,255,255,0.06);
+        display: flex;
+        padding: 8px 0 20px;
+    }
+    .nav-item {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        padding: 8px;
+        cursor: pointer;
+        color: #475569;
+        font-size: 10px;
+        font-weight: 600;
+        transition: color 0.15s;
+    }
+    .nav-item.ativo { color: #2563eb; }
+    .nav-item-icon { font-size: 22px; }
+
+    .pb-nav { padding-bottom: 80px; }
+
+    /* ── TELAS ── */
+    .tela { display: none; }
+    .tela.ativa { display: block; }
+
+    /* ── LOADING ── */
+    .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px;
+        color: #475569;
+        font-size: 13px;
+        gap: 8px;
+    }
+    .spinner {
+        width: 16px; height: 16px;
+        border: 2px solid rgba(255,255,255,0.1);
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- TELA LOGIN -->
+<div id="telaLogin">
+    <div class="login-logo">☁️</div>
+    <div class="login-titulo">Cloud System</div>
+    <div class="login-sub">Consulta de Produtos — App</div>
+    <div class="login-form">
+        <input id="loginDominio" type="text" placeholder="Domínio da empresa" autocomplete="off">
+        <input id="loginUsuario" type="text" placeholder="Usuário" autocomplete="off">
+        <input id="loginSenha" type="password" placeholder="Senha">
+        <button class="btn-primary" onclick="fazerLogin()">Entrar</button>
+    </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="appPrincipal">
+    <div class="app-header">
+        <div class="app-header-left">
+            <div class="app-header-logo">☁️</div>
+            <div>
+                <div class="app-header-title">Cloud PDV</div>
+                <div class="app-header-user" id="headerUser"></div>
+            </div>
+        </div>
+        <button class="btn-sair" onclick="sair()">Sair</button>
+    </div>
+
+    <!-- BUSCA -->
+    <div class="busca-section">
+        <div class="busca-row">
+            <div style="flex:1; position:relative;">
+                <input id="buscaInput" class="busca-input" type="text" placeholder="Buscar por nome ou código..." 
+                    onkeydown="if(event.key==='Enter') buscarProduto()" style="width:100%; padding-right:36px;">
+                <button onclick="limparBusca()" id="btnLimparBusca" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:#475569; font-size:18px; cursor:pointer; padding:0; width:auto; display:none;">✕</button>
+            </div>
+            <button class="btn-camera" onclick="abrirScanner()">📷</button>
+            <button class="btn-buscar" onclick="buscarProduto()">Buscar</button>
+        </div>
+    </div>
+
+    <!-- CONTEÚDO -->
+    <div class="app-content pb-nav">
+
+        <!-- TELA RESULTADO -->
+        <div id="telaResultado" class="tela ativa">
+            <div id="conteudoResultado">
+                <div class="estado-vazio">
+                    <div class="estado-vazio-icon">🔍</div>
+                    <div class="estado-vazio-texto">Bipe um código de barras ou<br>busque pelo nome do produto</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA HISTÓRICO -->
+        <div id="telaHistorico" class="tela">
+            <div id="conteudoHistorico">
+                <div class="estado-vazio">
+                    <div class="estado-vazio-icon">🕐</div>
+                    <div class="estado-vazio-texto">Nenhuma consulta recente</div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- NAV BOTTOM -->
+    <div class="bottom-nav">
+        <div class="nav-item ativo" id="navConsulta" onclick="mudarTela('resultado')">
+            <div class="nav-item-icon">🔍</div>
+            Consulta
+        </div>
+        <div class="nav-item" id="navHistorico" onclick="mudarTela('historico')">
+            <div class="nav-item-icon">🕐</div>
+            Recentes
+        </div>
+    </div>
+</div>
+
+<!-- SCANNER -->
+<div id="scannerContainer">
+    <div id="scanner">
+        <div class="scanner-overlay">
+            <div class="scanner-mira">
+                <div class="scanner-linha"></div>
+            </div>
+            <div class="scanner-texto">Aponte para o código de barras</div>
+        </div>
+    </div>
+    <div style="display:flex; gap:12px; padding:0 16px 8px;">
+        <button class="btn-fechar-scanner" onclick="toggleLanterna()" id="btnLanterna" style="flex:1; background:rgba(255,255,255,0.1);">🔦 Lanterna</button>
+        <button class="btn-fechar-scanner" onclick="fecharScanner()" style="flex:1;">✕ Cancelar</button>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+let usuarioApp = null;
+let historicoConsultas = JSON.parse(localStorage.getItem('appHistorico') || '[]');
+
+// ── TOAST ──
+function toast(msg, cor = '#10b981') {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.background = cor === '#f87171' ? '#1a0a0a' : '#0a1628';
+    t.style.borderColor = cor;
+    t.style.color = cor;
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 2500);
+}
+
+// ── LOGIN ──
+async function fazerLogin() {
+    const dominio = document.getElementById('loginDominio').value.trim().toLowerCase();
+    const login = document.getElementById('loginUsuario').value.trim().toLowerCase();
+    const senha = document.getElementById('loginSenha').value;
+    if (!dominio || !login || !senha) return toast('Preencha todos os campos!', '#f87171');
+    try {
+        const res = await fetch(`${API}/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login, senha, dominio })
+        });
+        const dados = await res.json();
+        if (!res.ok) return toast(dados.erro || 'Usuário ou senha incorretos!', '#f87171');
+        if (dados.plano !== 'avancado') return toast('App disponível apenas no plano Avançado!', '#f87171');
+        usuarioApp = dados;
+        localStorage.setItem('appToken', dados.token);
+        localStorage.setItem('appPlano', dados.plano);
+        localStorage.setItem('appPapel', dados.papel);
+        localStorage.setItem('appLogin', dados.login);
+        document.getElementById('telaLogin').style.display = 'none';
+        document.getElementById('appPrincipal').style.display = 'block';
+        document.getElementById('headerUser').innerText = `${dados.login.toUpperCase()} — ${dados.papel}`;
+    } catch { toast('Erro ao conectar com o servidor!', '#f87171'); }
+}
+
+function sair() {
+    if (!confirm('Deseja sair do app?')) return;
+    localStorage.removeItem('appToken');
+    localStorage.removeItem('appPlano');
+    localStorage.removeItem('appPapel');
+    localStorage.removeItem('appLogin');
+    usuarioApp = null;
+    document.getElementById('appPrincipal').style.display = 'none';
+    document.getElementById('telaLogin').style.display = 'flex';
+}
+
+// ── NAVEGAÇÃO ──
+function mudarTela(tela) {
+    document.querySelectorAll('.tela').forEach(t => t.classList.remove('ativa'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('ativo'));
+    if (tela === 'resultado') {
+        document.getElementById('telaResultado').classList.add('ativa');
+        document.getElementById('navConsulta').classList.add('ativo');
+    } else {
+        document.getElementById('telaHistorico').classList.add('ativa');
+        document.getElementById('navHistorico').classList.add('ativo');
+        renderHistorico();
+    }
+}
+
+// ── BUSCA ──
+async function buscarProduto(termoBusca) {
+    const termo = termoBusca || document.getElementById('buscaInput').value.trim();
+    if (!termo) return toast('Digite um nome ou código para buscar!', '#f87171');
+    mudarTela('resultado');
+    document.getElementById('conteudoResultado').innerHTML = '<div class="loading"><div class="spinner"></div> Buscando...</div>';
+    try {
+        const token = localStorage.getItem('appToken');
+        const res = await fetch(`${API}/produtos`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const produtos = await res.json();
+        // Busca por código exato ou nome parcial
+        let encontrados = produtos.filter(p =>
+            (p.codigoBarras && p.codigoBarras === termo) ||
+            p.nome.toLowerCase().includes(termo.toLowerCase())
+        );
+        if (encontrados.length === 0) {
+            document.getElementById('conteudoResultado').innerHTML = `
+                <div class="estado-vazio">
+                    <div class="estado-vazio-icon">😕</div>
+                    <div class="estado-vazio-texto">Nenhum produto encontrado para<br><b>"${termo}"</b></div>
+                </div>`;
+            return;
+        }
+        // Se achou um por código exato, mostra só ele
+        const porCodigo = produtos.find(p => p.codigoBarras && p.codigoBarras === termo);
+        const lista = porCodigo ? [porCodigo] : encontrados.slice(0, 5);
+        // Busca promoções
+        const resPromo = await fetch(`${API}/promocoes/ativas`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const promocoes = await resPromo.json();
+        const titulo = lista.length > 1 
+            ? `<div style="color:#475569; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:12px;">🔍 ${lista.length} produtos encontrados para "${termo}"</div>`
+            : '';
+        document.getElementById('conteudoResultado').innerHTML = titulo + lista.map(p => renderProdutoCard(p, promocoes)).join('');
+        // Adiciona ao histórico
+        if (lista.length === 1) adicionarHistorico(lista[0]);
+    } catch { toast('Erro ao buscar produto!', '#f87171'); }
+}
+
+function renderProdutoCard(p, promocoes) {
+    const papel = localStorage.getItem('appPapel');
+    const promo = promocoes.find(pr => pr.produtoId === p.id);
+    const precoVenda = promo ? parseFloat(promo.precoPromocional) : parseFloat(p.preco);
+    const precoCusto = parseFloat(p.precoCusto);
+    const margem = precoCusto > 0 ? (((precoVenda - precoCusto) / precoCusto) * 100).toFixed(0) : null;
+    const estoqueOk = p.estoque > 5;
+    const estoqueBaixo = p.estoque > 0 && p.estoque <= 5;
+    const semEstoque = p.estoque <= 0;
+    const estoqueColor = semEstoque ? 'vermelho' : estoqueBaixo ? 'amarelo' : 'verde';
+
+    let precosCusto = '';
+    if (papel === 'admin' || papel === 'gerente') {
+        precosCusto = `
+            <div class="preco-box">
+                <div class="preco-label">Preço de Custo</div>
+                <div class="preco-valor vermelho">R$ ${precoCusto.toFixed(2)}</div>
+            </div>
+            ${margem !== null ? `
+            <div class="preco-box">
+                <div class="preco-label">Margem</div>
+                <div class="preco-valor ${parseFloat(margem) < 0 ? 'vermelho' : parseFloat(margem) < 15 ? 'amarelo' : 'verde'}">${margem}%</div>
+            </div>` : ''}`;
+    }
+
+    return `
+    <div class="produto-card">
+        <div class="produto-nome">${p.nome}</div>
+        ${p.codigoBarras ? `<div class="produto-codigo">📦 ${p.codigoBarras}</div>` : '<div style="margin-bottom:16px;"></div>'}
+        ${promo ? `<div class="badge-promo">🎯 PROMOÇÃO ATIVA — até ${new Date(promo.dataFim).toLocaleDateString('pt-BR')}</div>` : ''}
+        <div class="produto-preco-grid">
+            <div class="preco-box">
+                <div class="preco-label">${promo ? 'Preço Promo' : 'Preço de Venda'}</div>
+                <div class="preco-valor ${promo ? 'amarelo' : 'azul'}">R$ ${precoVenda.toFixed(2)}</div>
+            </div>
+            ${promo ? `
+            <div class="preco-box">
+                <div class="preco-label">Preço Normal</div>
+                <div class="preco-valor" style="color:#475569; text-decoration:line-through;">R$ ${parseFloat(p.preco).toFixed(2)}</div>
+            </div>` : ''}
+            ${precosCusto}
+        </div>
+        <div class="produto-info-row">
+            <span class="produto-info-label">Estoque</span>
+            <span class="produto-info-valor preco-valor ${estoqueColor}">${semEstoque ? '⚠️ SEM ESTOQUE' : estoqueBaixo ? `⚠️ ${p.estoque} un` : `${p.estoque} un`}</span>
+        </div>
+        <div class="estoque-editor">
+            <span class="estoque-label">Atualizar Estoque</span>
+            <input class="estoque-input" type="number" id="estoque-${p.id}" value="${p.estoque}" min="0">
+            <button class="btn-salvar-estoque" onclick="salvarEstoque(${p.id}, '${p.nome}')">✓</button>
+        </div>
+    </div>`;
+}
+
+async function salvarEstoque(produtoId, nomeProduto) {
+    const novoEstoque = parseInt(document.getElementById(`estoque-${produtoId}`).value);
+    if (isNaN(novoEstoque) || novoEstoque < 0) return toast('Estoque inválido!', '#f87171');
+    try {
+        const token = localStorage.getItem('appToken');
+        const res = await fetch(`${API}/produtos/${produtoId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ estoque: novoEstoque })
+        });
+        if (!res.ok) return toast('Erro ao salvar!', '#f87171');
+        toast(`Estoque de "${nomeProduto}" atualizado!`);
+    } catch { toast('Erro ao salvar estoque!', '#f87171'); }
+}
+
+// ── HISTÓRICO ──
+function adicionarHistorico(produto) {
+    historicoConsultas = historicoConsultas.filter(h => h.id !== produto.id);
+    historicoConsultas.unshift({ id: produto.id, nome: produto.nome, codigo: produto.codigoBarras, preco: produto.preco, estoque: produto.estoque });
+    if (historicoConsultas.length > 20) historicoConsultas.pop();
+    localStorage.setItem('appHistorico', JSON.stringify(historicoConsultas));
+}
+
+function renderHistorico() {
+    const div = document.getElementById('conteudoHistorico');
+    if (historicoConsultas.length === 0) {
+        div.innerHTML = `<div class="estado-vazio"><div class="estado-vazio-icon">🕐</div><div class="estado-vazio-texto">Nenhuma consulta recente</div></div>`;
+        return;
+    }
+    div.innerHTML = `<div class="historico-titulo">Consultas Recentes</div>` +
+        historicoConsultas.map(h => `
+            <div class="historico-item" onclick="buscarProduto('${h.codigo || h.nome}')">
+                <div>
+                    <div class="historico-nome">${h.nome}</div>
+                    ${h.codigo ? `<div class="historico-codigo">${h.codigo}</div>` : ''}
+                </div>
+                <div class="historico-preco">R$ ${parseFloat(h.preco).toFixed(2)}</div>
+            </div>
+        `).join('');
+}
+
+// ── SCANNER ──
+function abrirScanner() {
+    document.getElementById('scannerContainer').classList.add('ativo');
+    Quagga.init({
+        inputStream: {
+            name: 'Live',
+            type: 'LiveStream',
+            target: document.getElementById('scanner'),
+            constraints: { facingMode: 'environment', width: { min: 640 }, height: { min: 480 } }
+        },
+        decoder: { readers: ['ean_reader', 'ean_8_reader', 'code_128_reader', 'code_39_reader', 'upc_reader'] }
+    }, err => {
+        if (err) { toast('Erro ao acessar câmera!', '#f87171'); fecharScanner(); return; }
+        Quagga.start();
+    });
+    Quagga.onDetected(result => {
+        const codigo = result.codeResult.code;
+        tocarBipe();
+        if (navigator.vibrate) navigator.vibrate([80, 30, 80]);
+        fecharScanner();
+        document.getElementById('buscaInput').value = codigo;
+        document.getElementById('btnLimparBusca').style.display = 'block';
+        buscarProduto(codigo);
+    });
+}
+
+function fecharScanner() {
+    Quagga.stop();
+    // Desliga lanterna ao fechar
+    if (window._stream) {
+        window._stream.getVideoTracks().forEach(track => {
+            try { track.applyConstraints({ advanced: [{ torch: false }] }); } catch(e) {}
+        });
+        window._lantErna = false;
+        document.getElementById('btnLanterna').style.background = 'rgba(255,255,255,0.1)';
+    }
+    document.getElementById('scannerContainer').classList.remove('ativo');
+}
+
+let _lantErna = false;
+function toggleLanterna() {
+    const track = Quagga.CameraAccess.getActiveTrack();
+    if (!track) return;
+    _lantErna = !_lantErna;
+    try {
+        track.applyConstraints({ advanced: [{ torch: _lantErna }] });
+        document.getElementById('btnLanterna').style.background = _lantErna ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.1)';
+    } catch(e) { toast('Lanterna não suportada neste dispositivo', '#f87171'); _lantErna = false; }
+}
+
+function limparBusca() {
+    document.getElementById('buscaInput').value = '';
+    document.getElementById('btnLimparBusca').style.display = 'none';
+    document.getElementById('buscaInput').focus();
+    document.getElementById('conteudoResultado').innerHTML = `
+        <div class="estado-vazio">
+            <div class="estado-vazio-icon">🔍</div>
+            <div class="estado-vazio-texto">Bipe um código de barras ou<br>busque pelo nome do produto</div>
+        </div>`;
+}
+
+function tocarBipe() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Bipe duplo — igual scanner profissional
+        [0, 0.12].forEach(delay => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2800, ctx.currentTime + delay);
+            osc.frequency.exponentialRampToValueAtTime(2200, ctx.currentTime + delay + 0.08);
+            gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+            gain.gain.linearRampToValueAtTime(1.0, ctx.currentTime + delay + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + delay + 0.09);
+            osc.start(ctx.currentTime + delay);
+            osc.stop(ctx.currentTime + delay + 0.1);
+        });
+    } catch(e) {}
+}
+
+// ── RESTAURAR SESSÃO ──
+(function() {
+    const token = localStorage.getItem('appToken');
+    const papel = localStorage.getItem('appPapel');
+    const login = localStorage.getItem('appLogin');
+    if (token && papel && login) {
+        usuarioApp = { token, papel, login };
+        document.getElementById('telaLogin').style.display = 'none';
+        document.getElementById('appPrincipal').style.display = 'block';
+        document.getElementById('headerUser').innerText = `${login.toUpperCase()} — ${papel}`;
+    }
+})();
+
+// ── PWA SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/app/sw.js').catch(() => {});
+}
+
+// ── ENTER NO LOGIN ──
+document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && document.getElementById('telaLogin').style.display !== 'none') {
+        fazerLogin();
+    }
+});
+</script>
+</body>
+</html>

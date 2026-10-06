@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud System — Super Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#060d1a;color:#e2e8f0;min-height:100vh}
+.login-screen{position:fixed;inset:0;background:#060d1a;display:flex;align-items:center;justify-content:center;z-index:100}
+.login-box{background:#0a1628;border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:36px;width:100%;max-width:380px;text-align:center}
+.login-box h2{color:#f1f5f9;font-size:20px;font-weight:800;margin-bottom:8px}
+.login-box p{color:#475569;font-size:13px;margin-bottom:24px}
+input,select{width:100%;padding:10px 14px;background:#060d1a;color:#e2e8f0;border:1px solid rgba(255,255,255,0.08);border-radius:8px;font-size:14px;font-family:'Inter',sans-serif;margin-bottom:12px}
+input:focus,select:focus{outline:none;border-color:#2563eb}
+button{width:100%;padding:11px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s}
+button:hover{background:#1d4ed8}
+.app{display:none}
+header{background:#0a1628;border-bottom:1px solid rgba(255,255,255,0.06);padding:0 32px;height:56px;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:800;color:#f1f5f9}
+.brand-icon{width:30px;height:30px;background:linear-gradient(135deg,#2563eb,#38bdf8);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.badge-admin{background:rgba(251,191,36,0.12);color:#fbbf24;border:1px solid rgba(251,191,36,0.2);padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.btn-sair{background:rgba(248,113,113,0.1);color:#f87171;border:1px solid rgba(248,113,113,0.2);border-radius:7px;padding:6px 16px;font-size:12px;font-weight:600;cursor:pointer;width:auto;font-family:'Inter',sans-serif}
+.btn-sair:hover{background:rgba(248,113,113,0.2)}
+.container{padding:32px}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+.stat{background:#0a1628;border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:18px}
+.stat h4{color:#475569;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:8px}
+.stat .val{font-size:24px;font-weight:800;letter-spacing:-1px}
+.val.verde{color:#34d399}.val.azul{color:#60a5fa}.val.amarelo{color:#fbbf24}.val.vermelho{color:#f87171}.val.roxo{color:#a78bfa}
+.toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.toolbar-left{display:flex;gap:10px;align-items:center}
+.section-title{font-size:15px;font-weight:700;color:#f1f5f9}
+.filtro-plano{background:#0a1628;border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;border-radius:8px;padding:7px 12px;font-size:13px;font-family:'Inter',sans-serif;width:auto;margin:0}
+.btn-novo{background:#2563eb;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;width:auto;font-family:'Inter',sans-serif}
+.btn-novo:hover{background:#1d4ed8}
+.tabela{width:100%;border-collapse:collapse;background:#0a1628;border:1px solid rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;margin-bottom:28px}
+.tabela th{background:rgba(255,255,255,0.03);color:#475569;padding:11px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.tabela td{padding:12px 16px;color:#cbd5e1;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:middle}
+.tabela tr:last-child td{border-bottom:none}
+.tabela tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-ativo{background:rgba(52,211,153,0.12);color:#34d399}
+.badge-inativo{background:rgba(248,113,113,0.12);color:#f87171}
+.badge-base{background:rgba(96,165,250,0.12);color:#60a5fa}
+.badge-intermediario{background:rgba(167,139,250,0.12);color:#a78bfa}
+.badge-avancado{background:rgba(251,191,36,0.12);color:#fbbf24}
+.btn-sm{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:none;font-family:'Inter',sans-serif;width:auto;margin:2px}
+.btn-ativar{background:rgba(52,211,153,0.12);color:#34d399}.btn-ativar:hover{background:rgba(52,211,153,0.25)}
+.btn-desativar{background:rgba(248,113,113,0.12);color:#f87171}.btn-desativar:hover{background:rgba(248,113,113,0.25)}
+.btn-editar{background:rgba(96,165,250,0.12);color:#60a5fa}.btn-editar:hover{background:rgba(96,165,250,0.25)}
+.btn-senha{background:rgba(167,139,250,0.12);color:#a78bfa}.btn-senha:hover{background:rgba(167,139,250,0.25)}
+.plano-select{background:#060d1a;border:1px solid rgba(255,255,255,0.08);color:#e2e8f0;border-radius:6px;padding:4px 8px;font-size:11px;font-family:'Inter',sans-serif;width:auto;margin:0}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#0a1628;border:1px solid rgba(255,255,255,0.08);border-radius:14px;padding:28px;width:100%;max-width:480px}
+.modal h3{color:#f1f5f9;font-size:16px;font-weight:700;margin-bottom:20px}
+.form-group{margin-bottom:14px}
+.form-group label{display:block;color:#64748b;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px}
+.form-group input,.form-group select{margin-bottom:0}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-btns{display:flex;gap:10px;margin-top:20px}
+.btn-cancelar{background:rgba(255,255,255,0.06);color:#94a3b8;border:1px solid rgba(255,255,255,0.08)}
+.btn-cancelar:hover{background:rgba(255,255,255,0.1)}
+.erro{color:#f87171;font-size:12px;margin-top:8px;display:none}
+#toast{position:fixed;bottom:20px;right:20px;background:#0a1628;color:#e2e8f0;padding:12px 20px;border-radius:8px;font-weight:600;font-size:13px;border:1px solid rgba(255,255,255,0.1);box-shadow:0 8px 24px rgba(0,0,0,0.4);display:none;z-index:200}
+.vencimento-ok{color:#34d399;font-size:12px}
+.vencimento-aviso{color:#fbbf24;font-size:12px}
+.vencimento-vencido{color:#f87171;font-size:12px;font-weight:700}
+</style>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+</head>
+<body>
+
+<div id="toast"></div>
+
+<div id="telaLogin" class="login-screen">
+    <div class="login-box">
+        <h2>🔐 Super Admin</h2>
+        <p>Painel exclusivo de gerenciamento Cloud System</p>
+        <input id="senhaAdmin" type="password" placeholder="Senha de acesso" autocomplete="off">
+        <div class="erro" id="erroLogin">Senha incorreta!</div>
+        <button onclick="entrar()">Entrar</button>
+    </div>
+</div>
+
+<div id="app" class="app">
+    <header>
+        <div class="brand">
+            <div class="brand-icon">☁️</div>
+            Cloud System
+            <span class="badge-admin">SUPER ADMIN</span>
+        </div>
+        <button class="btn-sair" onclick="sair()">🚪 Sair</button>
+    </header>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat"><h4>Total de Empresas</h4><div class="val azul" id="statTotal">—</div></div>
+            <div class="stat"><h4>Empresas Ativas</h4><div class="val verde" id="statAtivas">—</div></div>
+            <div class="stat"><h4>Empresas Inativas</h4><div class="val vermelho" id="statInativas">—</div></div>
+            <div class="stat"><h4>Plano Avançado</h4><div class="val amarelo" id="statAvancado">—</div></div>
+            <div class="stat"><h4>Faturamento Mensal</h4><div class="val roxo" id="statFaturamento">—</div></div>
+        </div>
+
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <div class="section-title">🏢 Empresas Cadastradas</div>
+                <select class="filtro-plano" id="filtroPlan" onchange="filtrarEmpresas()">
+                    <option value="">Todos os planos</option>
+                    <option value="base">Base</option>
+                    <option value="intermediario">Intermediário</option>
+                    <option value="avancado">Avançado</option>
+                </select>
+            </div>
+            <button class="btn-novo" onclick="abrirModalNovo()">+ Nova Empresa</button>
+        </div>
+
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Empresa</th>
+                    <th>Domínio</th>
+                    <th>Plano</th>
+                    <th>Usuários</th>
+                    <th>Vendas</th>
+                    <th>Criada em</th>
+                    <th>Vencimento</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tabelaEmpresas"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL NOVA EMPRESA -->
+<div class="modal-overlay" id="modalNovo">
+    <div class="modal">
+        <h3>➕ Nova Empresa</h3>
+        <div class="form-row">
+            <div class="form-group"><label>Nome da Empresa</label><input id="novoNome" type="text" placeholder="Ex: AK Padaria"></div>
+            <div class="form-group"><label>Domínio</label><input id="novoDominio" type="text" placeholder="Ex: akpadaria"></div>
+        </div>
+        <div class="form-group">
+            <label>Plano</label>
+            <select id="novoPlano">
+                <option value="base">Base — R$ 99,99/mês</option>
+                <option value="intermediario">Intermediário — R$ 179,99/mês</option>
+                <option value="avancado">Avançado — R$ 249,99/mês</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Data de Vencimento</label>
+            <input id="novoVencimento" type="date">
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label>Login do Admin</label><input id="novoAdminLogin" type="text" placeholder="Ex: admin"></div>
+            <div class="form-group"><label>Senha do Admin</label><input id="novoAdminSenha" type="password" placeholder="Mín. 4 caracteres"></div>
+        </div>
+        <div class="erro" id="erroModal"></div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modalNovo')">Cancelar</button>
+            <button onclick="criarEmpresa()">✓ Criar Empresa</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDITAR PLANO -->
+<div class="modal-overlay" id="modalEditar">
+    <div class="modal">
+        <h3>✏️ Editar Empresa</h3>
+        <input type="hidden" id="editarId">
+        <div class="form-group">
+            <label>Plano</label>
+            <select id="editarPlano">
+                <option value="base">Base — R$ 99,99/mês</option>
+                <option value="intermediario">Intermediário — R$ 179,99/mês</option>
+                <option value="avancado">Avançado — R$ 249,99/mês</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Data de Vencimento</label>
+            <input id="editarVencimento" type="date">
+        </div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modalEditar')">Cancelar</button>
+            <button onclick="salvarEdicao()">✓ Salvar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL REDEFINIR SENHA -->
+<div class="modal-overlay" id="modalSenha">
+    <div class="modal">
+        <h3>🔑 Redefinir Senha do Admin</h3>
+        <input type="hidden" id="senhaEmpresaId">
+        <p style="color:#475569;font-size:13px;margin-bottom:16px;">Define uma nova senha para o usuário <b style="color:#f1f5f9">admin</b> desta empresa.</p>
+        <div class="form-group">
+            <label>Nova Senha</label>
+            <input id="novaSenhaAdmin" type="password" placeholder="Mínimo 4 caracteres">
+        </div>
+        <div class="form-group">
+            <label>Confirmar Senha</label>
+            <input id="confirmarSenhaAdmin" type="password" placeholder="Repita a senha">
+        </div>
+        <div class="erro" id="erroSenha"></div>
+        <div class="modal-btns">
+            <button class="btn-cancelar" onclick="fecharModal('modalSenha')">Cancelar</button>
+            <button onclick="redefinirSenha()">✓ Redefinir Senha</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const API = 'http://localhost:3000';
+let SECRET = ''; // digitado no login, fica só em memória (nunca no código)
+let empresas = [];
+const PRECOS = { base: 99.99, intermediario: 179.99, avancado: 249.99 };
+
+function toast(msg, cor='#10b981') {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.borderColor = cor + '44';
+    t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3500);
+}
+
+async function entrar() {
+    const senha = document.getElementById('senhaAdmin').value;
+    if (!senha) return;
+    // Valida no servidor: se o secret estiver errado a API responde 403
+    try {
+        const res = await fetch(`${API}/superadmin/empresas`, { headers: { 'x-super-admin': senha } });
+        if (!res.ok) { document.getElementById('erroLogin').style.display = 'block'; return; }
+        SECRET = senha;
+        empresas = await res.json();
+    } catch { toast('Servidor indisponível', '#f87171'); return; }
+    document.getElementById('erroLogin').style.display = 'none';
+    document.getElementById('telaLogin').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    // Define vencimento padrão para 30 dias
+    const v = new Date(); v.setDate(v.getDate() + 30);
+    document.getElementById('novoVencimento').value = v.toISOString().split('T')[0];
+    renderEmpresas();
+}
+
+function sair() {
+    document.getElementById('telaLogin').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('senhaAdmin').value = '';
+    SECRET = '';
+}
+
+async function carregarEmpresas() {
+    try {
+        const res = await fetch(`${API}/superadmin/empresas`, { headers: { 'x-super-admin': SECRET } });
+        empresas = await res.json();
+        renderEmpresas();
+    } catch { toast('Erro ao carregar empresas', '#f87171'); }
+}
+
+function calcularVencimento(empresa) {
+    if (!empresa.vencimento) return '<span style="color:#475569;font-size:12px;">—</span>';
+    const hoje = new Date();
+    const venc = new Date(empresa.vencimento);
+    const dias = Math.ceil((venc - hoje) / (1000 * 60 * 60 * 24));
+    const dataStr = venc.toLocaleDateString('pt-BR');
+    if (dias < 0) return `<span class="vencimento-vencido">⚠️ Vencido há ${Math.abs(dias)}d<br>${dataStr}</span>`;
+    if (dias <= 7) return `<span class="vencimento-aviso">⏰ ${dias} dias<br>${dataStr}</span>`;
+    return `<span class="vencimento-ok">✓ ${dias} dias<br>${dataStr}</span>`;
+}
+
+function filtrarEmpresas() {
+    const filtro = document.getElementById('filtroPlan').value;
+    const lista = filtro ? empresas.filter(e => e.plano === filtro) : empresas;
+    renderTabela(lista);
+}
+
+function renderEmpresas() {
+    const ativas = empresas.filter(e => e.ativa).length;
+    const inativas = empresas.filter(e => !e.ativa).length;
+    const avancado = empresas.filter(e => e.plano === 'avancado' && e.ativa).length;
+    const fat = empresas.filter(e => e.ativa).reduce((s, e) => s + (PRECOS[e.plano] || 0), 0);
+
+    document.getElementById('statTotal').innerText = empresas.length;
+    document.getElementById('statAtivas').innerText = ativas;
+    document.getElementById('statInativas').innerText = inativas;
+    document.getElementById('statAvancado').innerText = avancado;
+    document.getElementById('statFaturamento').innerText = `R$ ${fat.toFixed(2).replace('.', ',')}`;
+
+    filtrarEmpresas();
+}
+
+function renderTabela(lista) {
+    const tbody = document.getElementById('tabelaEmpresas');
+    if (!lista.length) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#475569;padding:24px;">Nenhuma empresa encontrada</td></tr>'; return; }
+    tbody.innerHTML = lista.map(e => `
+        <tr>
+            <td><b style="color:#f1f5f9">${e.nome}</b></td>
+            <td><code style="background:rgba(255,255,255,0.06);padding:2px 8px;border-radius:4px;font-size:12px;">${e.dominio}</code></td>
+            <td>
+                <select class="plano-select" onchange="trocarPlanoRapido(${e.id}, this.value)">
+                    <option value="base" ${e.plano==='base'?'selected':''}>Base</option>
+                    <option value="intermediario" ${e.plano==='intermediario'?'selected':''}>Intermediário</option>
+                    <option value="avancado" ${e.plano==='avancado'?'selected':''}>Avançado</option>
+                </select>
+            </td>
+            <td>${e._count?.usuarios || 0}</td>
+            <td>${e._count?.vendas || 0}</td>
+            <td>${new Date(e.criadaEm).toLocaleDateString('pt-BR')}</td>
+            <td>${calcularVencimento(e)}</td>
+            <td><span class="badge ${e.ativa ? 'badge-ativo' : 'badge-inativo'}">${e.ativa ? 'Ativa' : 'Inativa'}</span></td>
+            <td>
+                <button class="btn-sm btn-editar" onclick="abrirModalEditar(${e.id})">✏️ Editar</button>
+                <button class="btn-sm btn-senha" onclick="abrirModalSenha(${e.id})">🔑 Senha</button>
+                <button class="btn-sm ${e.ativa ? 'btn-desativar' : 'btn-ativar'}" onclick="toggleEmpresa(${e.id}, ${!e.ativa})">
+                    ${e.ativa ? '🔴 Desativar' : '🟢 Ativar'}
+                </button>
+                <button class="btn-sm" style="background:rgba(248,113,113,0.15);color:#f87171;border:1px solid rgba(248,113,113,0.2);" onclick="excluirEmpresa(${e.id}, '${e.nome}')">🗑️ Excluir</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+async function trocarPlanoRapido(id, plano) {
+    try {
+        await fetch(`${API}/superadmin/empresas/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-super-admin': SECRET },
+            body: JSON.stringify({ plano })
+        });
+        toast('Plano atualizado!');
+        const e = empresas.find(x => x.id === id);
+        if (e) e.plano = plano;
+        renderEmpresas();
+    } catch { toast('Erro ao atualizar plano', '#f87171'); }
+}
+
+async function toggleEmpresa(id, ativa) {
+    if (!confirm(`Tem certeza que deseja ${ativa ? 'ativar' : 'desativar'} esta empresa?`)) return;
+    try {
+        await fetch(`${API}/superadmin/empresas/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-super-admin': SECRET },
+            body: JSON.stringify({ ativa })
+        });
+        toast(`Empresa ${ativa ? 'ativada' : 'desativada'}!`);
+        carregarEmpresas();
+    } catch { toast('Erro ao atualizar empresa', '#f87171'); }
+}
+
+function abrirModalNovo() {
+    const v = new Date(); v.setDate(v.getDate() + 30);
+    document.getElementById('novoVencimento').value = v.toISOString().split('T')[0];
+    document.getElementById('modalNovo').classList.add('open');
+}
+
+function abrirModalEditar(id) {
+    const e = empresas.find(x => x.id === id);
+    if (!e) return;
+    document.getElementById('editarId').value = id;
+    document.getElementById('editarPlano').value = e.plano;
+    document.getElementById('editarVencimento').value = e.vencimento ? new Date(e.vencimento).toISOString().split('T')[0] : '';
+    document.getElementById('modalEditar').classList.add('open');
+}
+
+function abrirModalSenha(id) {
+    document.getElementById('senhaEmpresaId').value = id;
+    document.getElementById('novaSenhaAdmin').value = '';
+    document.getElementById('confirmarSenhaAdmin').value = '';
+    document.getElementById('erroSenha').style.display = 'none';
+    document.getElementById('modalSenha').classList.add('open');
+}
+
+function fecharModal(id) {
+    document.getElementById(id).classList.remove('open');
+    document.querySelectorAll('.erro').forEach(e => e.style.display = 'none');
+}
+
+async function criarEmpresa() {
+    const nome = document.getElementById('novoNome').value.trim();
+    const dominio = document.getElementById('novoDominio').value.trim();
+    const plano = document.getElementById('novoPlano').value;
+    const vencimento = document.getElementById('novoVencimento').value;
+    const adminLogin = document.getElementById('novoAdminLogin').value.trim();
+    const adminSenha = document.getElementById('novoAdminSenha').value;
+    const erro = document.getElementById('erroModal');
+
+    if (!nome || !dominio || !adminLogin || !adminSenha) { erro.innerText = 'Preencha todos os campos!'; erro.style.display = 'block'; return; }
+    if (adminSenha.length < 4) { erro.innerText = 'Senha deve ter no mínimo 4 caracteres!'; erro.style.display = 'block'; return; }
+
+    try {
+        const res = await fetch(`${API}/superadmin/empresas`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-super-admin': SECRET },
+            body: JSON.stringify({ nome, dominio, plano, adminLogin, adminSenha, vencimento })
+        });
+        const dados = await res.json();
+        if (dados.erro) { erro.innerText = dados.erro; erro.style.display = 'block'; return; }
+        fecharModal('modalNovo');
+        document.getElementById('novoNome').value = '';
+        document.getElementById('novoDominio').value = '';
+        document.getElementById('novoAdminLogin').value = '';
+        document.getElementById('novoAdminSenha').value = '';
+        toast(`✅ Empresa "${nome}" criada! Domínio: ${dados.empresa.dominio}`);
+        carregarEmpresas();
+    } catch { erro.innerText = 'Erro ao criar empresa!'; erro.style.display = 'block'; }
+}
+
+async function salvarEdicao() {
+    const id = parseInt(document.getElementById('editarId').value);
+    const plano = document.getElementById('editarPlano').value;
+    const vencimento = document.getElementById('editarVencimento').value;
+    try {
+        await fetch(`${API}/superadmin/empresas/${id}`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json', 'x-super-admin': SECRET },
+            body: JSON.stringify({ plano, vencimento })
+        });
+        fecharModal('modalEditar');
+        toast('Empresa atualizada!');
+        carregarEmpresas();
+    } catch { toast('Erro ao salvar', '#f87171'); }
+}
+
+async function redefinirSenha() {
+    const empresaId = parseInt(document.getElementById('senhaEmpresaId').value);
+    const novaSenha = document.getElementById('novaSenhaAdmin').value;
+    const confirmar = document.getElementById('confirmarSenhaAdmin').value;
+    const erro = document.getElementById('erroSenha');
+
+    if (!novaSenha || novaSenha.length < 4) { erro.innerText = 'Senha deve ter no mínimo 4 caracteres!'; erro.style.display = 'block'; return; }
+    if (novaSenha !== confirmar) { erro.innerText = 'As senhas não coincidem!'; erro.style.display = 'block'; return; }
+
+    try {
+        const res = await fetch(`${API}/superadmin/empresas/${empresaId}/resetsenha`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json', 'x-super-admin': SECRET },
+            body: JSON.stringify({ novaSenha })
+        });
+        const dados = await res.json();
+        if (dados.erro) { erro.innerText = dados.erro; erro.style.display = 'block'; return; }
+        fecharModal('modalSenha');
+        toast('Senha redefinida com sucesso!');
+    } catch { erro.innerText = 'Erro ao redefinir senha!'; erro.style.display = 'block'; }
+}
+
+async function excluirEmpresa(id, nome) {
+    const confirmacao = prompt(`⚠️ ATENÇÃO: Esta ação é irreversível!\n\nTodos os dados da empresa serão apagados permanentemente.\n\nDigite o nome da empresa para confirmar:\n"${nome}"`);
+    if (confirmacao === null) return;
+    if (confirmacao.trim() !== nome.trim()) { alert('Nome incorreto! Exclusão cancelada.'); return; }
+    try {
+        const res = await fetch(`${API}/superadmin/empresas/${id}`, {
+            method: 'DELETE', headers: { 'x-super-admin': SECRET }
+        });
+        const dados = await res.json();
+        if (dados.erro) { toast(dados.erro, '#f87171'); return; }
+        toast(`Empresa "${nome}" excluída permanentemente!`, '#f87171');
+        carregarEmpresas();
+    } catch { toast('Erro ao excluir empresa', '#f87171'); }
+}
+
+document.getElementById('senhaAdmin').addEventListener('keydown', e => { if (e.key === 'Enter') entrar(); });
+</script>
+</body>
+</html>

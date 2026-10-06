@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud PDV - Sistema de Vendas</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+</head>
+<body>
+
+<div id="toast">Aviso!</div>
+
+<div id="modalUsuarios" class="modal" style="display:none; max-width:500px;">
+    <h3>👥 Gerenciar Usuários</h3>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-bottom: 15px;">
+    <div style="margin-bottom:20px;">
+        <h4 style="margin-bottom:10px; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Novo Usuário</h4>
+        <input id="novoLogin" type="text" placeholder="Login" style="margin-bottom:8px;">
+        <input id="novaSenha" type="password" placeholder="Senha" style="margin-bottom:8px;">
+        <select id="novoPapel" style="margin-bottom:12px;">
+            <option value="operador">Operador</option>
+            <option value="admin">Admin</option>
+        </select>
+        <button onclick="criarUsuario()" class="btn-success">+ Criar Usuário</button>
+    </div>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-bottom: 15px;">
+    <h4 style="margin-bottom:10px; color:#475569; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Usuários Cadastrados</h4>
+    <div id="listaUsuarios"></div>
+    <button onclick="fecharModais()" style="background:rgba(255,255,255,0.06); color:#94a3b8; margin-top:15px;">Fechar</button>
+</div>
+
+<div id="modalHistorico" class="modal" style="display:none; max-width:520px;">
+    <h3>📋 Histórico de Vendas</h3>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-bottom: 15px;">
+    <div style="margin-bottom:12px;">
+        <label style="font-size:11px; color:#475569; display:block; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">Filtrar por período</label>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <input id="filtroInicio" type="date" style="flex:1;">
+            <span style="color:#334155;">→</span>
+            <input id="filtroFim" type="date" style="flex:1;">
+            <button onclick="carregarHistorico()" class="btn-success" style="width:auto; padding:8px 14px; margin:0;">Buscar</button>
+        </div>
+    </div>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-bottom: 12px;">
+    <div id="listaHistorico" style="max-height:380px; overflow-y:auto;"></div>
+    <button onclick="fecharModais()" style="background:rgba(255,255,255,0.06); color:#94a3b8; margin-top:15px;">Fechar</button>
+</div>
+
+<div id="overlay" class="overlay" onclick="fecharModais()"></div>
+
+<div id="telaLogin" class="login-screen">
+    <div class="login-box">
+        <h2>☁️ Cloud PDV</h2>
+        <input id="loginDominio" type="text" placeholder="Domínio da Empresa" autocomplete="off" style="margin-bottom:8px;">
+        <input id="loginUsuario" type="text" placeholder="Usuário" autocomplete="off">
+        <input id="loginSenha" type="password" placeholder="Senha" autocomplete="new-password">
+        <button onclick="autenticar()" class="btn-success" style="margin-top:12px;">Entrar no Sistema</button>
+    </div>
+</div>
+
+<div id="telaCaixa" class="login-screen" style="display:none;">
+    <div class="login-box" style="max-width:420px;">
+        <h2>🖥️ Selecionar Caixa</h2>
+        <p style="color:#475569; font-size:13px; margin-bottom:20px;">Escolha o caixa que você vai operar hoje</p>
+        <div id="listaCaixasLogin" style="margin-bottom:16px;"></div>
+        <button onclick="voltarLogin()" style="background:rgba(255,255,255,0.06); color:#94a3b8; margin-top:8px;">← Voltar</button>
+    </div>
+</div>
+
+<header>
+    <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:28px; height:28px; background:linear-gradient(135deg,#2563eb,#38bdf8); border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:14px;">☁️</div>
+        <span>Cloud PDV</span>
+        <small id="caixaAtivo" style="font-size:11px; color:#2563eb; font-weight:700; margin-left:4px; background:rgba(37,99,235,0.1); padding:2px 8px; border-radius:4px; display:none;"></small>
+        <small id="usuarioLogadoAviso" style="font-size:11px; color:#475569; font-weight:500; margin-left:4px;"></small>
+    </div>
+    <div class="atalhos-barra">
+        Buscar:<span>F2</span> | Pgto:<span>F4</span> | Fechar Dia:<span>F7</span> | Finalizar:<span>F8</span> | Avulso:<span>F6</span>
+    </div>
+</header>
+
+<div class="container">
+
+    <div class="box">
+        <h3>📦 Cadastro de Itens</h3>
+        <input id="nome" placeholder="Nome do Produto">
+        <div style="display:flex; gap:6px;">
+            <input id="precoCusto" type="number" step="0.01" placeholder="Custo (R$)">
+            <input id="preco" type="number" step="0.01" placeholder="Venda (R$)">
+        </div>
+        <input id="estoque" type="number" placeholder="Quantidade em Estoque">
+        <input id="codigoBarras" type="text" placeholder="Código de Barras (Bipe o produto aqui)">
+        <button onclick="addProduto()" class="btn-success">+ Incluir no Sistema</button>
+        <input id="busca" placeholder="🔍 [F2] Ex: 5*Bolacha ou Passe o Scanner...">
+        <div class="scroll-content" id="listaProdutos"></div>
+    </div>
+
+    <div class="box">
+        <h3>🛒 Cupom Atual <span id="contador-itens" style="color:#475569; font-size:12px; font-weight:500;">0 itens</span></h3>
+        <div class="scroll-content" id="carrinho"></div>
+        <div class="total-box">
+            <p class="total">R$ <span id="total">0,00</span></p>
+
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                <select id="tipoDesconto" onchange="calcularDesconto()" style="flex:0.4; margin:0;">
+                    <option value="valor">R$ Desconto</option>
+                    <option value="percent">% Desconto</option>
+                </select>
+                <input id="valorDesconto" type="number" step="0.01" min="0" placeholder="0,00" oninput="calcularDesconto()" style="flex:0.6; margin:0;">
+            </div>
+            <div id="totalComDescontoBox" style="display:none; text-align:right; margin-bottom:8px;">
+                <span style="font-size:12px; color:#475569;">Total com desconto: </span>
+                <span style="font-weight:700; color:#34d399;">R$ <span id="totalComDesconto">0,00</span></span>
+            </div>
+
+            <label style="font-size:11px; color:#475569; text-transform:uppercase; letter-spacing:0.5px;">Forma de Pagamento [F4]:</label>
+            <select id="pagamento" onchange="toggleValorPago()" style="margin-top:5px;">
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">Pix</option>
+                <option value="cartao">Cartão de Crédito/Débito</option>
+                <option value="vr">🍽️ VR (Vale Refeição)</option>
+                <option value="cheque_funcionario">👷 Cheque Funcionário</option>
+            </select>
+            <input id="valorPago" type="number" step="0.01" placeholder="Valor Recebido (Dinheiro)">
+            <button onclick="finalizar()" class="btn-success" style="font-size:14px; font-weight:700;">✓ Finalizar Compra (F8)</button>
+        </div>
+    </div>
+
+    <div id="painelResumo" class="box" style="flex: 0.7; display: none;">
+        <h3>📊 Resumo do Turno</h3>
+        <div class="scroll-content">
+            <div class="resumo-linha"><span>Faturamento Total:</span><b style="color:#34d399;">R$ <span id="totalDia">0,00</span></b></div>
+            <div class="resumo-linha"><span>Em Dinheiro:</span><span>R$ <span id="dinheiro">0,00</span></span></div>
+            <div class="resumo-linha"><span>Sangrias:</span><span style="color:#f87171;">R$ <span id="sangriaTotal">0,00</span></span></div>
+            <div class="resumo-linha"><span>Dinheiro no Caixa:</span><b style="color:#60a5fa;">R$ <span id="dinheiroCaixa">0,00</span></b></div>
+            <div class="resumo-linha"><span>Em Pix:</span><span>R$ <span id="pix">0,00</span></span></div>
+            <div class="resumo-linha"><span>Em Cartão:</span><span>R$ <span id="cartao">0,00</span></span></div>
+            <div class="resumo-linha"><span>Em VR:</span><span>R$ <span id="vr">0,00</span></span></div>
+
+            <div class="backup-section">
+                <label style="font-size:11px; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">Sangria do Caixa</label>
+                <input id="valorSangria" type="number" step="0.01" placeholder="Valor da sangria (R$)">
+                <input id="motivoSangria" type="text" placeholder="Motivo/observação">
+                <button onclick="registrarSangria()" class="btn-danger">Registrar Sangria</button>
+            </div>
+
+            <div class="backup-section">
+                <label style="font-size:11px; color:#475569; display:block; margin-bottom:5px; text-transform:uppercase; letter-spacing:0.5px;">🛡️ Backup</label>
+                <div class="backup-buttons">
+                    <button onclick="exportarDados()" style="background:rgba(96,165,250,0.12); color:#60a5fa; border:1px solid rgba(96,165,250,0.2);">📥 Exportar</button>
+                    <button onclick="importarDados()" style="background:rgba(255,255,255,0.06); color:#94a3b8;">📤 Restaurar</button>
+                </div>
+                <input type="file" id="importFile" style="display:none" onchange="processarArquivoBackup(event)">
+            </div>
+        </div>
+
+        <button id="btnHistorico" onclick="abrirHistorico()" style="background:rgba(96,165,250,0.12); color:#60a5fa; border:1px solid rgba(96,165,250,0.2); margin-bottom:6px;">📋 Histórico de Vendas</button>
+        <button id="btnUsuarios" onclick="abrirUsuarios()" style="background:rgba(99,102,241,0.12); color:#818cf8; border:1px solid rgba(99,102,241,0.2); margin-bottom:6px;">👥 Gerenciar Usuários</button>
+        <button id="btnRelatorio" onclick="abrirFechamento()" style="background:rgba(255,255,255,0.06); color:#94a3b8;">[F7] Abrir Relatório</button>
+    </div>
+
+</div>
+
+<div id="receipt" class="modal">
+    <h2 style="text-align:center; margin-top:0; color:#f1f5f9; font-size:16px;">🧾 Venda Concluída!</h2>
+    <div id="cupomImpressao" style="display:none;">
+        <div style="text-align:center; font-weight:bold; font-size:13px;" id="cupomNomeEmpresa"></div>
+        <div style="text-align:center; font-size:11px;" id="cupomEnderecoEmpresa"></div>
+        <div style="text-align:center; font-size:11px;" id="cupomTelefoneEmpresa"></div>
+        <div style="text-align:center; margin:4px 0;">================================</div>
+        <div style="text-align:center; font-size:11px; font-weight:bold;">** CUPOM NAO TEM VALOR FISCAL **</div>
+        <div style="text-align:center; margin:4px 0;">================================</div>
+        <div id="cupomData" style="font-size:11px; margin:4px 0;"></div>
+        <div style="margin:4px 0;">--------------------------------</div>
+        <div id="cupomItens" style="font-size:11px;"></div>
+        <div style="margin:4px 0;">--------------------------------</div>
+        <div id="cupomTotal" style="font-size:13px; font-weight:bold;"></div>
+        <div id="cupomDesconto" style="font-size:11px;"></div>
+        <div id="cupomMetodo" style="font-size:11px;"></div>
+        <div id="cupomTroco" style="font-size:11px;"></div>
+        <div style="text-align:center; margin:4px 0;">================================</div>
+        <div style="text-align:center; font-size:11px;">Obrigado! Volte sempre!</div>
+        <div style="text-align:center; margin:4px 0;">================================</div>
+    </div>
+    <div id="cupomTela">
+        <p style="font-size:12px; text-align:center; color:#475569;" id="data"></p>
+        <hr style="border: 1px solid rgba(255,255,255,0.06);">
+        <div id="itens" style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size:13px;"></div>
+        <hr style="border: 1px solid rgba(255,255,255,0.06);">
+        <p id="metodo" style="margin:5px 0; font-size:13px;"></p>
+        <p id="descontoRecibo" style="font-weight:700; color:#fbbf24; margin:0; font-size:13px;"></p>
+        <h3 id="totalRecibo" style="margin: 10px 0; color:#60a5fa;"></h3>
+        <p id="trocoRecibo" style="font-weight:700; color:#34d399; margin:0; font-size:13px;"></p>
+    </div>
+    <button onclick="imprimirRecibo()" class="btn-success" style="margin-top:12px;">Imprimir Cupom</button>
+    <button onclick="fecharModais()" class="btn-danger">Próxima Venda (Esc)</button>
+</div>
+
+<div id="fechamento" class="modal" style="max-height:90vh; display:flex; flex-direction:column;">
+    <h3>📊 Fechamento do Caixa</h3>
+    <p style="font-size:12px; margin-top:-5px; color:#475569;" id="dataFechamentoPrint"></p>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-bottom: 15px;">
+    <div id="conteudoFechamento" style="overflow-y:auto; flex:1; padding-right:4px;"></div>
+    <hr style="border: 1px solid rgba(255,255,255,0.06); margin-top: 15px;">
+    <button onclick="imprimirFechamento()" class="btn-success" style="margin-top:15px;">📠 Imprimir Fechamento</button>
+    <button onclick="fecharDia()" class="btn-danger">Fechar Caixa do Dia</button>
+    <button onclick="fecharModais()" style="background:rgba(255,255,255,0.06); color:#94a3b8;">Voltar</button>
+</div>
+
+<script src="js/api.js?v=9"></script>
+<script src="js/storage.js?v=9"></script>
+<script src="js/ui.js?v=9"></script>
+<script src="js/auth.js?v=9"></script>
+<script src="js/produtos.js?v=9"></script>
+<script src="js/carrinho.js?v=9"></script>
+<script src="js/vendas.js?v=9"></script>
+<script src="js/caixa.js?v=9"></script>
+<script src="js/backup.js?v=9"></script>
+<script src="js/usuarios.js?v=9"></script>
+<script src="js/historico.js?v=9"></script>
+<script src="js/main.js?v=9"></script>
+</body>
+</html>

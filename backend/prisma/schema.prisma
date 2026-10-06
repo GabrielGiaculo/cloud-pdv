@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Produto {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  precoCusto   Decimal
+  preco        Decimal
+  estoque      Int
+  codigoBarras String?
+  itensVenda   ItemVenda[]
+}
+
+// Cada venda finalizada no PDV. "itens" é a lista de produtos
+// vendidos naquela transação (ver model ItemVenda abaixo).
+model Venda {
+  id        Int         @id @default(autoincrement())
+  data      DateTime    @default(now())
+  total     Decimal
+  metodo    String      // "dinheiro" | "pix" | "cartao"
+  valorPago Decimal
+  troco     Decimal
+  itens     ItemVenda[]
+}
+
+// Guarda uma "fotografia" do produto no momento da venda
+// (nome/preço/custo), assim relatórios antigos não mudam
+// se o produto for editado ou removido depois.
+model ItemVenda {
+  id         Int      @id @default(autoincrement())
+  vendaId    Int
+  venda      Venda    @relation(fields: [vendaId], references: [id])
+  produtoId  Int?
+  produto    Produto? @relation(fields: [produtoId], references: [id])
+  nome       String
+  precoCusto Decimal
+  preco      Decimal
+  qtd        Int
+}
+
+model Sangria {
+  id     Int      @id @default(autoincrement())
+  data   DateTime @default(now())
+  valor  Decimal
+  motivo String?
+}
+
+model Usuario {
+  id     Int    @id @default(autoincrement())
+  login  String @unique
+  senha  String // sempre um HASH (bcrypt), nunca a senha em texto puro
+  papel  String // "admin" | "operador"
+}

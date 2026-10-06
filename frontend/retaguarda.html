@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Retaguarda</title>
+<link rel="stylesheet" href="css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☁️</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsbarcode/3.11.5/JsBarcode.all.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+    * { font-family: 'Inter', 'Segoe UI', sans-serif; }
+    .retaguarda-container { display: flex; height: 100vh; overflow: hidden; background: #060d1a; }
+    .sidebar { width: 240px; background: #0a1628; border-right: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; flex-shrink: 0; }
+    .sidebar-header { padding: 24px 20px 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .sidebar-brand-icon { width: 34px; height: 34px; background: linear-gradient(135deg, #2563eb, #38bdf8); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .sidebar-brand-text h2 { color: #f1f5f9; font-size: 14px; font-weight: 700; margin: 0; letter-spacing: -0.2px; }
+    .sidebar-brand-text span { color: #475569; font-size: 11px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .sidebar-user { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: rgba(255,255,255,0.04); border-radius: 8px; }
+    .sidebar-user-avatar { width: 28px; height: 28px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: white; flex-shrink: 0; }
+    .sidebar-user-info { flex: 1; min-width: 0; }
+    .sidebar-user-name { color: #e2e8f0; font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user-role { color: #475569; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sidebar-nav { flex: 1; padding: 12px 10px; overflow-y: auto; }
+    .nav-section-label { color: #334155; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; padding: 12px 10px 6px; }
+    .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+    .sidebar-menu li { padding: 9px 12px; cursor: pointer; color: #64748b; font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 10px; border-radius: 8px; margin-bottom: 2px; transition: all 0.15s; }
+    .sidebar-menu li .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+    .sidebar-menu li:hover { background: rgba(255,255,255,0.06); color: #cbd5e1; }
+    .sidebar-menu li.ativo { background: rgba(37,99,235,0.15); color: #60a5fa; font-weight: 600; }
+    .sidebar-footer { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,0.06); }
+    .sidebar-footer button { width: 100%; background: transparent; color: #ef4444; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 8px; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.15s; }
+    .sidebar-footer button:hover { background: rgba(239,68,68,0.1); }
+    .conteudo { flex: 1; overflow-y: auto; padding: 32px 36px; background: #060d1a; }
+    .aba { display: none; } .aba.ativa { display: block; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .page-title { color: #f1f5f9; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin: 0; }
+    .page-subtitle { color: #475569; font-size: 13px; margin-top: 3px; }
+    .filtro-bar { display: flex; gap: 8px; margin-bottom: 24px; align-items: center; flex-wrap: wrap; background: #0a1628; border: 1px solid rgba(255,255,255,0.06); border-radius: 10px; padding: 12px 16px; }
+    .filtro-bar label { color: #475569; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .filtro-bar input, .filtro-bar select { background: #060d1a; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 7px 12px; font-size: 13px; font-family: 'Inter', sans-serif; }
+    .filtro-bar input:focus, .filtro-bar select:focus { outline: none; border-color: #2563eb; }
+    .filtro-bar .sep { color: #334155; font-size: 12px; }
+    .btn-filtro { background: #2563eb; color: white; border: none; border-radius: 6px; padding: 7px 16px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-filtro:hover { background: #1d4ed8; }
+    .btn-filtro-sec { background: rgba(99,102,241,0.15); color: #818cf8; border: 1px solid rgba(99,102,241,0.3); border-radius: 6px; padding: 7px 16px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-filtro-sec:hover { background: rgba(99,102,241,0.25); }
+    .btn-filtro, .btn-filtro-sec { width: auto !important; }
+    .card-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 28px; }
+    .card { background: #0a1628; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; position: relative; overflow: hidden; transition: border-color 0.15s; }
+    .card:hover { border-color: rgba(255,255,255,0.12); }
+    .card-icon { font-size: 20px; margin-bottom: 12px; display: block; }
+    .card h4 { color: #475569; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 6px; }
+    .card .valor { color: #f1f5f9; font-size: 22px; font-weight: 700; letter-spacing: -0.5px; }
+    .card .valor.verde { color: #34d399; } .card .valor.azul { color: #60a5fa; } .card .valor.vermelho { color: #f87171; } .card .valor.amarelo { color: #fbbf24; } .card .valor.roxo { color: #a78bfa; }
+    .card-accent { position: absolute; top: 0; right: 0; width: 3px; height: 100%; border-radius: 0 12px 12px 0; }
+    .card-accent.verde { background: #34d399; } .card-accent.azul { background: #60a5fa; } .card-accent.vermelho { background: #f87171; } .card-accent.amarelo { background: #fbbf24; } .card-accent.roxo { background: #a78bfa; }
+    .section-title { color: #94a3b8; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 14px; }
+    .tabela { width: 100%; border-collapse: collapse; background: #0a1628; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; }
+    .tabela th { background: rgba(255,255,255,0.03); color: #475569; padding: 11px 16px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .tabela td { padding: 13px 16px; color: #cbd5e1; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .tabela tr:last-child td { border-bottom: none; } .tabela tr:hover td { background: rgba(255,255,255,0.03); }
+    .badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600; letter-spacing: 0.3px; }
+    .badge-verde { background: rgba(52,211,153,0.12); color: #34d399; } .badge-azul { background: rgba(96,165,250,0.12); color: #60a5fa; } .badge-vermelho { background: rgba(248,113,113,0.12); color: #f87171; } .badge-amarelo { background: rgba(251,191,36,0.12); color: #fbbf24; } .badge-roxo { background: rgba(167,139,250,0.12); color: #a78bfa; } .badge-laranja { background: rgba(251,146,60,0.12); color: #fb923c; }
+    .form-card { background: #0a1628; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 24px; margin-bottom: 24px; }
+    .form-card-title { color: #e2e8f0; font-size: 15px; font-weight: 700; margin: 0 0 20px; padding-bottom: 14px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 7px; }
+    .form-group input, .form-group select { width: 100%; background: #060d1a; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 14px; font-size: 13px; font-family: 'Inter', sans-serif; box-sizing: border-box; transition: border-color 0.15s; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .btn-primario { background: #2563eb; color: white; border: none; border-radius: 8px; padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-primario:hover { background: #1d4ed8; transform: translateY(-1px); }
+    .btn-secundario { background: rgba(255,255,255,0.06); color: #94a3b8; border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; padding: 10px 20px; cursor: pointer; font-size: 13px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-secundario:hover { background: rgba(255,255,255,0.1); color: #e2e8f0; }
+    .btn-perigo { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-perigo:hover { background: rgba(248,113,113,0.2); }
+    .btn-info { background: rgba(96,165,250,0.1); color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); border-radius: 6px; padding: 5px 12px; cursor: pointer; font-size: 12px; font-weight: 600; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+    .btn-info:hover { background: rgba(96,165,250,0.2); }
+    .promo-info-box { background: rgba(37,99,235,0.06); border: 1px solid rgba(37,99,235,0.2); border-radius: 10px; padding: 16px; margin-bottom: 16px; display: none; }
+    .promo-info-linha { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 13px; }
+    .promo-info-linha:last-child { border-bottom: none; }
+    .promo-aviso-prejuizo { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.2); border-radius: 8px; padding: 10px 14px; font-size: 12px; font-weight: 600; margin-top: 10px; display: none; }
+    #areaImpressaoEtiquetas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .etiqueta-preview { background: white; color: black; border: 1px dashed #ccc; border-radius: 4px; padding: 8px; width: 180px; text-align: center; font-family: Arial, sans-serif; box-sizing: border-box; }
+    .etiqueta-empresa { font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; color: #333; border-bottom: 1px solid #333; padding-bottom: 3px; margin-bottom: 4px; }
+    .etiqueta-nome { font-size: 14px; font-weight: bold; margin-bottom: 4px; color: #000; line-height: 1.2; }
+    .etiqueta-barcode { margin: 4px auto; display: block; }
+    .etiqueta-cod-num { font-size: 8px; color: #555; margin-bottom: 4px; }
+    .etiqueta-preco { font-size: 28px; font-weight: bold; color: #000; line-height: 1; }
+    .etiqueta-preco small { font-size: 12px; }
+    /* PIN box */
+    .pin-status-ok { background: rgba(52,211,153,0.1); color: #34d399; border: 1px solid rgba(52,211,153,0.2); border-radius: 8px; padding: 8px 14px; font-size: 12px; font-weight: 600; margin-top: 8px; display: none; }
+    @media print {
+        @page { size: A4; margin: 8mm; }
+        body * { visibility: hidden; }
+        #areaImpressaoEtiquetas, #areaImpressaoEtiquetas * { visibility: visible !important; }
+        #areaImpressaoEtiquetas { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; display: flex !important; flex-wrap: wrap !important; gap: 6px !important; padding: 0 !important; }
+        .etiqueta-preview { border: 1px dashed #999 !important; page-break-inside: avoid !important; background: white !important; color: black !important; width: 88mm !important; padding: 6px !important; }
+    }
+</style>
+</head>
+<body>
+
+<div id="toast">Aviso!</div>
+
+<div id="telaLogin" class="login-screen">
+    <div class="login-box">
+        <h2>🔒 Cloud Retaguarda</h2>
+        <input id="loginDominio" type="text" placeholder="Domínio da Empresa" autocomplete="off" style="margin-bottom:8px;">
+        <input id="loginUsuario" type="text" placeholder="Usuário">
+        <input id="loginSenha" type="password" placeholder="Senha" autocomplete="off">
+        <button onclick="autenticarRetaguarda()" class="btn-success" style="margin-top:15px;">Entrar</button>
+    </div>
+</div>
+
+<div id="appRetaguarda" class="retaguarda-container" style="display:none;">
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-icon">☁️</div>
+                <div class="sidebar-brand-text"><h2>Cloud PDV</h2><span>Retaguarda</span></div>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="userAvatar">A</div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" id="usuarioRetaguarda">Admin</div>
+                    <div class="sidebar-user-role" id="usuarioRole">Administrador</div>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <div class="nav-section-label">Principal</div>
+            <ul class="sidebar-menu">
+                <li class="ativo" onclick="mudarAba('dashboard', this)"><span class="nav-icon">📊</span> Dashboard</li>
+                <li onclick="mudarAba('produtos', this)"><span class="nav-icon">📦</span> Produtos</li>
+                <li onclick="mudarAba('etiquetas', this)"><span class="nav-icon">🏷️</span> Etiquetas</li>
+                <li onclick="mudarAba('promocoes', this)"><span class="nav-icon">🎯</span> Promoções</li>
+            </ul>
+            <div class="nav-section-label">Relatórios</div>
+            <ul class="sidebar-menu">
+                <li onclick="mudarAba('vendas', this)"><span class="nav-icon">📋</span> Vendas</li>
+            </ul>
+            <div class="nav-section-label">Gestão</div>
+            <ul class="sidebar-menu">
+                <li onclick="mudarAba('funcionarios', this)"><span class="nav-icon">👷</span> Funcionários</li>
+                <li onclick="mudarAba('usuarios', this)"><span class="nav-icon">👥</span> Usuários</li>
+                <li id="menuCaixas" onclick="mudarAba('caixas', this)"><span class="nav-icon">🖥️</span> Caixas</li>
+                <li id="menuConfiguracoes" onclick="mudarAba('configuracoes', this)"><span class="nav-icon">⚙️</span> Configurações</li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <button onclick="sairRetaguarda()">🚪 Sair da Conta</button>
+        </div>
+    </div>
+
+    <div class="conteudo">
+
+        <!-- DASHBOARD -->
+        <div id="aba-dashboard" class="aba ativa">
+            <div class="page-header"><div><h2 class="page-title">Dashboard</h2><p class="page-subtitle">Visão geral do faturamento e desempenho</p></div></div>
+            <div class="filtro-bar">
+                <label>Período</label>
+                <input id="dashInicio" type="date">
+                <span class="sep">→</span>
+                <input id="dashFim" type="date">
+                <button class="btn-filtro" onclick="carregarDashboard()">Atualizar</button>
+                <button class="btn-filtro-sec" onclick="voltarMesAtual()">📅 Mês Atual</button>
+            </div>
+            <div class="card-grid">
+                <div class="card"><div class="card-accent verde"></div><span class="card-icon">💰</span><h4>Faturamento</h4><div class="valor verde">R$ <span id="dashFaturamento">0,00</span></div></div>
+                <div class="card"><div class="card-accent azul"></div><span class="card-icon">📈</span><h4>Lucro Líquido</h4><div class="valor azul">R$ <span id="dashLucro">0,00</span></div></div>
+                <div class="card"><div class="card-accent amarelo"></div><span class="card-icon">🛒</span><h4>Total de Vendas</h4><div class="valor amarelo"><span id="dashQtdVendas">0</span></div></div>
+                <div class="card"><div class="card-accent roxo"></div><span class="card-icon">🎯</span><h4>Ticket Médio</h4><div class="valor roxo">R$ <span id="dashTicket">0,00</span></div></div>
+                <div class="card"><div class="card-accent verde"></div><span class="card-icon">💵</span><h4>Em Dinheiro</h4><div class="valor verde">R$ <span id="dashDinheiro">0,00</span></div></div>
+                <div class="card"><div class="card-accent azul"></div><span class="card-icon">📱</span><h4>Em Pix</h4><div class="valor azul">R$ <span id="dashPix">0,00</span></div></div>
+                <div class="card"><div class="card-accent amarelo"></div><span class="card-icon">💳</span><h4>Em Cartão</h4><div class="valor amarelo">R$ <span id="dashCartao">0,00</span></div></div>
+                <div class="card"><div class="card-accent vermelho"></div><span class="card-icon">⬇️</span><h4>Sangrias</h4><div class="valor vermelho">R$ <span id="dashSangrias">0,00</span></div></div>
+            </div>
+            <p class="section-title">🏆 Produtos Mais Vendidos</p>
+            <table class="tabela">
+                <thead><tr><th>#</th><th>Produto</th><th>Qtd Vendida</th><th>Faturamento</th></tr></thead>
+                <tbody id="dashMaisVendidos"></tbody>
+            </table>
+
+            <!-- GRÁFICOS — só aparece para plano avançado -->
+            <div id="secaoGraficos" style="display:none; margin-top:32px;">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:20px;">
+                    <div class="card" style="padding:20px;">
+                        <p class="section-title" style="margin-bottom:16px;">📈 Faturamento por Dia</p>
+                        <canvas id="graficoVendasDia" height="200"></canvas>
+                    </div>
+                    <div class="card" style="padding:20px;">
+                        <p class="section-title" style="margin-bottom:16px;">💳 Vendas por Método de Pagamento</p>
+                        <canvas id="graficoPagamentos" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="card" style="padding:20px; margin-bottom:20px;">
+                    <p class="section-title" style="margin-bottom:16px;">📊 Quantidade de Vendas por Dia</p>
+                    <canvas id="graficoQtdDia" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- PRODUTOS -->
+        <div id="aba-produtos" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Produtos</h2><p class="page-subtitle">Cadastro e gestão do catálogo</p></div></div>
+            <div class="form-card">
+                <p class="form-card-title" id="tituloProdutoForm">Novo Produto</p>
+                <input type="hidden" id="produtoEditId">
+                <div class="form-row">
+                    <div class="form-group"><label>Nome do Produto</label><input id="prodNome" type="text" placeholder="Ex: Coca-Cola 2L"></div>
+                    <div class="form-group"><label>Código de Barras</label><input id="prodCodigo" type="text" placeholder="Bipe ou digite"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Preço de Custo (R$)</label><input id="prodCusto" type="number" step="0.01" placeholder="0,00"></div>
+                    <div class="form-group"><label>Preço de Venda (R$)</label><input id="prodPreco" type="number" step="0.01" placeholder="0,00"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Estoque Atual</label><input id="prodEstoque" type="number" placeholder="0"></div>
+                    <div class="form-group"><label>Estoque Mínimo (alerta)</label><input id="prodEstoqueMin" type="number" placeholder="5"></div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-primario" onclick="salvarProdutoRetaguarda()">💾 Salvar Produto</button>
+                    <button class="btn-secundario" onclick="limparFormProduto()">Limpar</button>
+                </div>
+            </div>
+            <div class="filtro-bar"><input id="buscaProduto" type="text" placeholder="🔍 Buscar produto ou código..." oninput="filtrarProdutos()" style="flex:1;"></div>
+            <table class="tabela">
+                <thead><tr><th>Nome</th><th>Código</th><th>Custo</th><th>Venda</th><th>Margem</th><th>Estoque</th><th>Ações</th></tr></thead>
+                <tbody id="tabelaProdutos"></tbody>
+            </table>
+        </div>
+
+        <!-- ETIQUETAS -->
+        <div id="aba-etiquetas" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Etiquetas</h2><p class="page-subtitle">Impressão de etiquetas de prateleira em papel A4</p></div></div>
+            <div class="filtro-bar"><input id="buscaEtiqueta" type="text" placeholder="🔍 Buscar produto..." oninput="filtrarEtiquetas()" style="flex:1;"></div>
+            <table class="tabela">
+                <thead><tr><th>Produto</th><th>Preço</th><th>Qtd de Etiquetas</th><th>Selecionar</th></tr></thead>
+                <tbody id="tabelaEtiquetas"></tbody>
+            </table>
+            <div style="margin-top:20px; display:flex; gap:10px;">
+                <button class="btn-primario" onclick="imprimirEtiquetas()">🖨️ Imprimir Selecionadas</button>
+                <button class="btn-secundario" onclick="limparEtiquetas()">Limpar Seleção</button>
+            </div>
+            <div id="areaImpressaoEtiquetas"></div>
+        </div>
+
+        <!-- PROMOÇÕES -->
+        <div id="aba-promocoes" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Promoções</h2><p class="page-subtitle">Defina preços promocionais com data de início e fim</p></div></div>
+            <div class="form-card">
+                <p class="form-card-title">Nova Promoção</p>
+                <div class="form-group">
+                    <label>Produto</label>
+                    <select id="promoProduoId" onchange="calcularMargem()"><option value="">Selecione um produto...</option></select>
+                </div>
+                <div class="promo-info-box" id="promoInfoBox">
+                    <div class="promo-info-linha"><span style="color:#475569;">Preço de custo</span><span id="promoInfoCusto" style="color:#cbd5e1;">R$ 0,00</span></div>
+                    <div class="promo-info-linha"><span style="color:#475569;">Preço atual de venda</span><span id="promoInfoPrecoAtual" style="color:#cbd5e1;">R$ 0,00</span></div>
+                    <div class="promo-info-linha"><span style="color:#475569;">Margem atual</span><span id="promoInfoMargemAtual" style="color:#34d399; font-weight:700;">0%</span></div>
+                    <div class="promo-info-linha" style="border-top:1px solid rgba(37,99,235,0.3); margin-top:8px; padding-top:8px;"><span style="color:#60a5fa;">Preço promocional</span><span id="promoInfoPrecoNovo" style="color:#60a5fa; font-weight:700;">R$ 0,00</span></div>
+                    <div class="promo-info-linha"><span style="color:#475569;">Margem com promoção</span><span id="promoInfoMargemNova" style="font-weight:700;">0%</span></div>
+                    <div class="promo-aviso-prejuizo" id="promoAvisoPrejuizo">⚠️ Preço abaixo do custo — você terá prejuízo nesta venda.</div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Preço Promocional (R$)</label><input id="promoPreco" type="number" step="0.01" placeholder="0,00" oninput="calcularMargem()"></div>
+                    <div class="form-group"><label>Data Início</label><input id="promoInicio" type="datetime-local"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Data Fim</label><input id="promoFim" type="datetime-local"></div>
+                </div>
+                <button class="btn-primario" onclick="criarPromocao()">🎯 Criar Promoção</button>
+            </div>
+            <p class="section-title">Promoções Cadastradas</p>
+            <table class="tabela">
+                <thead><tr><th>Produto</th><th>Preço Normal</th><th>Preço Promo</th><th>Início</th><th>Fim</th><th>Status</th><th>Ação</th></tr></thead>
+                <tbody id="tabelaPromocoes"></tbody>
+            </table>
+        </div>
+
+        <!-- VENDAS -->
+        <div id="aba-vendas" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Histórico de Vendas</h2><p class="page-subtitle">Consulte e filtre todas as transações</p></div></div>
+            <div class="filtro-bar">
+                <label>Período</label>
+                <input id="vendasInicio" type="date">
+                <span class="sep">→</span>
+                <input id="vendasFim" type="date">
+                <select id="filtroVendasCaixa" onchange="carregarVendasRetaguarda()" style="display:none; width:auto; margin:0;">
+                    <option value="">Todos os caixas</option>
+                </select>
+                <button class="btn-filtro" onclick="carregarVendasRetaguarda()">Buscar</button>
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; color:#f87171;">
+                    <input type="checkbox" id="filtroMostrarCanceladas" onchange="carregarVendasRetaguarda()" style="width:auto; margin:0;">
+                    Mostrar canceladas
+                </label>
+            </div>
+            <div id="resumoVendas" style="margin-bottom:20px;"></div>
+            <table class="tabela">
+                <thead><tr><th>Data / Cancelamento</th><th>Itens</th><th>Pagamento</th><th>Total</th></tr></thead>
+                <tbody id="tabelaVendas"></tbody>
+            </table>
+        </div>
+
+
+        <!-- FUNCIONÁRIOS -->
+        <div id="aba-funcionarios" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Funcionários</h2><p class="page-subtitle">Cheque funcionário — crédito interno com desconto em folha</p></div></div>
+            <div class="form-card">
+                <p class="form-card-title" id="tituloFuncForm">Novo Funcionário</p>
+                <input type="hidden" id="funcEditId">
+                <div class="form-row">
+                    <div class="form-group"><label>Nome Completo</label><input id="funcNome" type="text" placeholder="Ex: João da Silva"></div>
+                    <div class="form-group"><label>CPF</label><input id="funcCpf" type="text" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCpf(this)"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Limite de Crédito (R$)</label><input id="funcLimite" type="number" step="0.01" placeholder="Ex: 200,00"></div>
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn-primario" onclick="salvarFuncionario()">💾 Salvar Funcionário</button>
+                    <button class="btn-secundario" onclick="limparFormFuncionario()">Limpar</button>
+                </div>
+            </div>
+            <table class="tabela">
+                <thead><tr><th>Nome</th><th>CPF</th><th>Limite</th><th>Usado</th><th>Disponível</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="tabelaFuncionarios"></tbody>
+            </table>
+        </div>
+
+        <!-- USUÁRIOS -->
+        <div id="aba-usuarios" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Usuários</h2><p class="page-subtitle">Gerencie quem tem acesso ao sistema</p></div></div>
+            <div class="form-card">
+                <p class="form-card-title">Novo Usuário</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Login</label><input id="novoLoginRet" type="text" placeholder="Ex: joao"></div>
+                    <div class="form-group">
+                        <label>Papel</label>
+                        <select id="novoPapelRet">
+                            <option value="operador">Operador — só acessa o PDV</option>
+                            <option value="gerente">Gerente — acessa retaguarda (sem financeiro) + pode autorizar ações no PDV</option>
+                            <option value="admin">Admin — acesso total</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Senha</label><input id="novaSenhaRet" type="password" placeholder="Mínimo 4 caracteres" autocomplete="new-password"></div>
+                    <div class="form-group"><label>Confirmar Senha</label><input id="confirmarSenhaRet" type="password" placeholder="Repita a senha" autocomplete="new-password"></div>
+                </div>
+                <button class="btn-primario" onclick="criarUsuarioRetaguarda()">+ Criar Usuário</button>
+            </div>
+            <table class="tabela">
+                <thead><tr><th>Login</th><th>Papel</th><th>PIN Supervisor</th><th>Ações</th></tr></thead>
+                <tbody id="tabelaUsuarios"></tbody>
+            </table>
+        </div>
+
+        <!-- CAIXAS -->
+        <div id="aba-caixas" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Caixas</h2><p class="page-subtitle">Gerencie os caixas da sua loja</p></div></div>
+            <div class="form-card">
+                <p class="form-card-title">➕ Novo Caixa</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Nome do Caixa</label><input id="caixaNomeInputAba" type="text" placeholder="Ex: Caixa 1"></div>
+                    <div class="form-group"><label>Número</label><input id="caixaNumeroInputAba" type="number" placeholder="Ex: 1" min="1"></div>
+                </div>
+                <button class="btn-primario" onclick="criarCaixaAba()">+ Adicionar Caixa</button>
+            </div>
+            <table class="tabela">
+                <thead><tr><th>Número</th><th>Nome</th><th>Status</th><th>Operador</th><th>Início de Uso</th><th>Ações</th></tr></thead>
+                <tbody id="listaCaixasAba"></tbody>
+            </table>
+        </div>
+
+        <!-- CONFIGURAÇÕES -->
+        <div id="aba-configuracoes" class="aba">
+            <div class="page-header"><div><h2 class="page-title">Configurações</h2><p class="page-subtitle">Dados da empresa e preferências da conta</p></div></div>
+            <div class="form-card" style="margin-bottom:20px;">
+                <p class="form-card-title">🏪 Dados da Empresa</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Nome da Empresa</label><input id="cfgNomeEmpresa" type="text" placeholder="Ex: Mercadinho do João"></div>
+                    <div class="form-group"><label>CNPJ / CPF</label><input id="cfgCnpj" type="text" placeholder="Ex: 00.000.000/0000-00"></div>
+                </div>
+                <div class="form-group"><label>Endereço</label><input id="cfgEndereco" type="text" placeholder="Ex: Rua das Flores, 123 - Centro"></div>
+                <div class="form-row">
+                    <div class="form-group"><label>Telefone</label><input id="cfgTelefone" type="text" placeholder="Ex: (11) 99999-9999"></div>
+                    <div class="form-group"><label>Email para Relatório de Fechamento</label><input id="cfgEmail" type="email" placeholder="Ex: dono@empresa.com.br"></div>
+                </div>
+                <button class="btn-primario" onclick="salvarDadosEmpresa()">💾 Salvar Dados</button>
+            </div>
+            <div class="form-card" style="margin-bottom:20px;">
+                <p class="form-card-title">🔐 Meu PIN de Supervisor</p>
+                <p style="color:#475569; font-size:13px; margin:0 0 16px;">O PIN é usado para autorizar sangrias e cancelamentos feitos por operadores no PDV. Deve ter 4 a 6 dígitos numéricos.</p>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Novo PIN (4-6 dígitos)</label>
+                        <input id="cfgPin" type="text" inputmode="numeric" maxlength="6" placeholder="Ex: 1234" autocomplete="off" style="-webkit-text-security:disc;">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirmar PIN</label>
+                        <input id="cfgPinConfirm" type="text" inputmode="numeric" maxlength="6" placeholder="Repita o PIN" autocomplete="off" style="-webkit-text-security:disc;">
+                    </div>
+                </div>
+                <div class="pin-status-ok" id="pinStatusOk">✅ PIN cadastrado com sucesso!</div>
+                <button class="btn-primario" onclick="salvarPin()">🔐 Salvar PIN</button>
+            </div>
+            <div class="form-card" style="margin-bottom:20px;">
+                <p class="form-card-title">🖥️ Gerenciar Caixas</p>
+                <p style="color:#475569; font-size:13px; margin:0 0 16px;">Cadastre os caixas disponíveis na sua loja. Cada caixa pode ser operado por um funcionário diferente simultaneamente.</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Nome do Caixa</label><input id="caixaNomeInput" type="text" placeholder="Ex: Caixa 1"></div>
+                    <div class="form-group"><label>Número</label><input id="caixaNumeroInput" type="number" placeholder="Ex: 1" min="1"></div>
+                </div>
+                <button class="btn-primario" onclick="criarCaixa()">+ Adicionar Caixa</button>
+                <div style="margin-top:20px;">
+                    <table class="tabela" id="tabelaCaixas">
+                        <thead><tr><th>Número</th><th>Nome</th><th>Status</th><th>Operador</th><th>Ações</th></tr></thead>
+                        <tbody id="listaCaixas"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="form-card">
+                <p class="form-card-title">🔒 Alterar Senha</p>
+                <div class="form-group"><label>Senha Atual</label><input id="senhaAtual" type="password" placeholder="Sua senha atual" autocomplete="current-password"></div>
+                <div class="form-group"><label>Nova Senha</label><input id="novaSenha" type="password" placeholder="Nova senha" autocomplete="new-password"></div>
+                <div class="form-group"><label>Confirmar Nova Senha</label><input id="confirmarNovaSenha" type="password" placeholder="Repita a nova senha" autocomplete="new-password"></div>
+                <button class="btn-primario" onclick="alterarSenha()">🔒 Alterar Senha</button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/retaguarda.js"></script>
+</body>
+</html>
